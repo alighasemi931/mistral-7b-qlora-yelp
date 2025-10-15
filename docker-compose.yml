@@ -1,0 +1,50 @@
+services:
+
+  webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    hostname: open-webui
+    expose:
+     - 8080/tcp
+    ports:
+     - 8080:8080/tcp
+    environment:
+     - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+     - ollama
+
+  ollama:
+    image: ollama/ollama
+    #image: deercanidae/ollama-gpu-fix:latest
+    container_name: ollama
+    hostname: ollama
+    expose:
+     - 11434/tcp
+    ports:
+     - 11434:11434/tcp
+    #environment:
+    # - NVIDIA_VISIBLE_DEVICES=all
+    # - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    healthcheck:
+      test: ollama --version || exit 1
+    command: serve
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+       resources:
+         reservations:
+           devices:
+           - driver: nvidia
+             device_ids: ['all']
+             capabilities: ["gpu"]
+volumes:
+  ollama:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /home/dc/containers/Ollama/ollama/config
+  open-webui-data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: /home/dc/containers/Ollama/open-webui/data
